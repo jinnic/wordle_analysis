@@ -6,6 +6,7 @@ This project analyzes and visualizes letter and positional frequencies of five-l
 2. **English Five-Letter Words**: Sourced from the NLTK corpus.
 
 The project includes data fetching, processing, statistical analysis, and visualization.
+![Visualization](wordle_letter_positoinal_analysis.png)
 
 ---
 
