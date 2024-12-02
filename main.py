@@ -101,6 +101,13 @@ def calculate_positional_frequency(word_list):
     return position_counts
 
 
+def get_top_letters(freq_dict, top_n=10):
+    return pd.DataFrame(
+        sorted(freq_dict.items(), key=lambda x: x[1], reverse=True)[:top_n],
+        columns=["Letter", "Frequency"],
+    )
+
+
 # Section 4: Statistics and Probabilities
 def calculate_statistics(freq_dict):
     """Calculates statistics for a frequency dictionary."""
@@ -128,33 +135,94 @@ def calculate_positional_probabilities(positional_freq_dict):
     return positional_probs
 
 
-# Section 5: Visualization and Analysis
-def plot_frequency_bar(freq_dict, title):
-    """Plots a bar chart for letter frequencies."""
-    plt.figure(figsize=(10, 6))
-    plt.bar(freq_dict.keys(), freq_dict.values(), color="skyblue")
-    plt.title(title)
-    plt.xlabel("Letters")
-    plt.ylabel("Frequency")
+# Section 5: Visualize Frequencies
+def plot_frequency_bar(freq_dict, title, color="skyblue"):
+    """
+    Plots a bar chart for letter frequencies with annotations.
+
+    Args:
+    freq_dict (dict): Frequency dictionary of letters.
+    title (str): Title of the plot.
+    color (str): Color of the bars.
+    """
+    sorted_freq = dict(
+        sorted(freq_dict.items(), key=lambda x: x[1], reverse=True)
+    )  # Sort by frequency
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(sorted_freq.keys(), sorted_freq.values(), color=color)
+    plt.title(title, fontsize=16)
+    plt.xlabel("Letters", fontsize=12)
+    plt.ylabel("Frequency", fontsize=12)
+
+    # Annotate bars
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 10,
+            f"{int(height)}",
+            ha="center",
+            fontsize=10,
+        )
+
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.tight_layout()
     plt.show()
 
+    # def plot_frequency_bar(freq_dict, title):
+    # """Plots a bar chart for letter frequencies."""
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(freq_dict.keys(), freq_dict.values(), color="skyblue")
+    # plt.title(title)
+    # plt.xlabel("Letters")
+    # plt.ylabel("Frequency")
+    # plt.show()
 
-def plot_positional_heatmap(positional_freq_dict, title):
-    """Plots a heatmap for positional letter frequencies."""
+
+def plot_positional_heatmap(positional_freq_dict, title, cmap="coolwarm"):
+    """
+    Plots a heatmap for positional letter frequencies with normalized data and alphabet on Y-axis.
+
+    Args:
+    positional_freq_dict (dict): Positional frequency dictionary.
+    title (str): Title of the heatmap.
+    cmap (str): Colormap for the heatmap.
+    """
     heatmap_data = pd.DataFrame(positional_freq_dict).fillna(0)
-    plt.figure(figsize=(10, 6))
-    sns.heatmap(heatmap_data, cmap="Blues", annot=True, fmt=".0f")
-    plt.title(title)
-    plt.xlabel("Position")
-    plt.ylabel("Letters")
+    heatmap_data = heatmap_data.div(
+        heatmap_data.sum(axis=0), axis=1
+    )  # Normalize by column (position)
+    heatmap_data.index = list("abcdefghijklmnopqrstuvwxyz")[
+        : heatmap_data.shape[0]
+    ]  # Set Y-axis as alphabet
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(
+        heatmap_data, cmap=cmap, annot=True, fmt=".2f", cbar=True, linewidths=0.5
+    )
+    plt.title(title, fontsize=16)
+    plt.xlabel("Position", fontsize=12)
+    plt.ylabel("Letters", fontsize=12)
+    plt.tight_layout()
     plt.show()
+
+    # def plot_positional_heatmap(positional_freq_dict, title):
+    # """Plots a heatmap for positional letter frequencies."""
+    # heatmap_data = pd.DataFrame(positional_freq_dict).fillna(0)
+    # plt.figure(figsize=(10, 6))
+    # sns.heatmap(heatmap_data, cmap="Blues", annot=True, fmt=".0f")
+    # plt.title(title)
+    # plt.xlabel("Position")
+    # plt.ylabel("Letters")
+    # plt.show()
 
 
 def visualize_data(
     wordle_freq, wordle_positional_freq, english_freq, english_positional_freq
 ):
     """
-    Visualizes letter and positional frequencies in continuous Matplotlib figures.
+    Visualizes letter and positional frequencies in a more effective way.
 
     Args:
     wordle_freq (dict): Letter frequencies for Wordle answers.
@@ -162,34 +230,151 @@ def visualize_data(
     english_freq (dict): Letter frequencies for English five-letter words.
     english_positional_freq (dict): Positional frequencies for English five-letter words.
     """
-    fig, axs = plt.subplots(2, 2, figsize=(15, 12))  # 2x2 grid of subplots
+    # Wordle Letter Frequency
+    print("## plot frequency bar - wordle")
+    plot_frequency_bar(wordle_freq, "Wordle Letter Frequency", color="skyblue")
 
-    # Plot 1: Wordle Letter Frequency
-    axs[0, 0].bar(wordle_freq.keys(), wordle_freq.values(), color="skyblue")
-    axs[0, 0].set_title("Wordle Letter Frequency")
-    axs[0, 0].set_xlabel("Letters")
-    axs[0, 0].set_ylabel("Frequency")
-
-    # Plot 2: Wordle Positional Frequency Heatmap
-    heatmap_data_wordle = pd.DataFrame(wordle_positional_freq).fillna(0)
-    sns.heatmap(heatmap_data_wordle, cmap="Blues", annot=True, fmt=".0f", ax=axs[0, 1])
-    axs[0, 1].set_title("Wordle Positional Frequency")
-
-    # Plot 3: English Letter Frequency
-    axs[1, 0].bar(english_freq.keys(), english_freq.values(), color="lightgreen")
-    axs[1, 0].set_title("English Five-Letter Words Letter Frequency")
-    axs[1, 0].set_xlabel("Letters")
-    axs[1, 0].set_ylabel("Frequency")
-
-    # Plot 4: English Positional Frequency Heatmap
-    heatmap_data_english = pd.DataFrame(english_positional_freq).fillna(0)
-    sns.heatmap(
-        heatmap_data_english, cmap="Greens", annot=True, fmt=".0f", ax=axs[1, 1]
+    # Wordle Positional Frequency Heatmap
+    print("## plot positional heatmap - wordle")
+    plot_positional_heatmap(
+        wordle_positional_freq, "Wordle Positional Frequency", cmap="Blues"
     )
-    axs[1, 1].set_title("English Positional Frequency")
 
-    # Adjust layout
-    plt.tight_layout()
+    # English Letter Frequency
+    print("## plot frequency bar - english")
+    plot_frequency_bar(english_freq, "English Letter Frequency", color="lightgreen")
+
+    # English Positional Frequency Heatmap
+    print("## plot positional heatmap - english")
+    plot_positional_heatmap(
+        english_positional_freq, "English Positional Frequency", cmap="Greens"
+    )
+
+
+# def visualize_data(
+#     wordle_freq, wordle_positional_freq, english_freq, english_positional_freq
+# ):
+#     """
+#     Visualizes letter and positional frequencies in continuous Matplotlib figures.
+
+#     Args:
+#     wordle_freq (dict): Letter frequencies for Wordle answers.
+#     wordle_positional_freq (dict): Positional frequencies for Wordle answers.
+#     english_freq (dict): Letter frequencies for English five-letter words.
+#     english_positional_freq (dict): Positional frequencies for English five-letter words.
+#     """
+#     fig, axs = plt.subplots(2, 2, figsize=(15, 12))  # 2x2 grid of subplots
+
+#     # Plot 1: Wordle Letter Frequency
+#     axs[0, 0].bar(wordle_freq.keys(), wordle_freq.values(), color="skyblue")
+#     axs[0, 0].set_title("Wordle Letter Frequency")
+#     axs[0, 0].set_xlabel("Letters")
+#     axs[0, 0].set_ylabel("Frequency")
+
+#     # Plot 2: Wordle Positional Frequency Heatmap
+#     heatmap_data_wordle = pd.DataFrame(wordle_positional_freq).fillna(0)
+#     sns.heatmap(heatmap_data_wordle, cmap="Blues", annot=True, fmt=".0f", ax=axs[0, 1])
+#     axs[0, 1].set_title("Wordle Positional Frequency")
+
+#     # Plot 3: English Letter Frequency
+#     axs[1, 0].bar(english_freq.keys(), english_freq.values(), color="lightgreen")
+#     axs[1, 0].set_title("English Five-Letter Words Letter Frequency")
+#     axs[1, 0].set_xlabel("Letters")
+#     axs[1, 0].set_ylabel("Frequency")
+
+#     # Plot 4: English Positional Frequency Heatmap
+#     heatmap_data_english = pd.DataFrame(english_positional_freq).fillna(0)
+#     sns.heatmap(
+#         heatmap_data_english, cmap="Greens", annot=True, fmt=".0f", ax=axs[1, 1]
+#     )
+#     axs[1, 1].set_title("English Positional Frequency")
+
+#     # Adjust layout
+#     plt.tight_layout()
+#     plt.show()
+
+
+# Section 6: Analyze Deviation
+
+
+def total_variation_distance(prob_dist1, prob_dist2):
+    """
+    Computes the total variation distance (TVD) between two probability distributions.
+
+    Args:
+    prob_dist1 (dict): First probability distribution.
+    prob_dist2 (dict): Second probability distribution.
+
+    Returns:
+    float: Total variation distance.
+    """
+    keys = set(prob_dist1.keys()).union(prob_dist2.keys())
+    return sum(abs(prob_dist1.get(k, 0) - prob_dist2.get(k, 0)) for k in keys) / 2
+
+
+def analyze_deviation(wordle_list, five_letter_words):
+    """
+    Analyzes deviation between Wordle word distributions and English five-letter word distributions.
+
+    Args:
+    wordle_list (list): List of Wordle answers.
+    five_letter_words (list): List of English five-letter words.
+
+    Returns:
+    None
+    """
+    # Calculate frequencies
+    wordle_freq = calculate_letter_frequency(wordle_list)
+    english_freq = calculate_letter_frequency(five_letter_words)
+
+    # Normalize to probabilities
+    wordle_probs = calculate_probabilities(wordle_freq, sum(wordle_freq.values()))
+    english_probs = calculate_probabilities(english_freq, sum(english_freq.values()))
+
+    # Calculate total variation distance
+    tvd = total_variation_distance(wordle_probs, english_probs)
+
+    print("\n--- Analysis of Deviation ---")
+    print(f"Total Variation Distance: {tvd:.4f}")
+    print("\nTop Wordle Letter Probabilities:")
+    for k, v in sorted(wordle_probs.items(), key=lambda item: item[1], reverse=True)[
+        :10
+    ]:
+        print(f"{k}: {v:.4f}")
+    print("\nTop English Letter Probabilities:")
+    for k, v in sorted(english_probs.items(), key=lambda item: item[1], reverse=True)[
+        :10
+    ]:
+        print(f"{k}: {v:.4f}")
+
+
+# Section 7: Visualize Comparison
+def plot_comparison(wordle_probs, english_probs):
+    """
+    Plots a comparison of Wordle and English letter probability distributions.
+
+    Args:
+    wordle_probs (dict): Probability distribution for Wordle answers.
+    english_probs (dict): Probability distribution for English words.
+
+    Returns:
+    None
+    """
+    import matplotlib.pyplot as plt
+
+    labels = sorted(set(wordle_probs.keys()).union(english_probs.keys()))
+    wordle_values = [wordle_probs.get(k, 0) for k in labels]
+    english_values = [english_probs.get(k, 0) for k in labels]
+
+    x = range(len(labels))
+    plt.figure(figsize=(10, 6))
+    plt.bar(x, wordle_values, width=0.4, label="Wordle", align="center", alpha=0.7)
+    plt.bar(x, english_values, width=0.4, label="English", align="edge", alpha=0.7)
+    plt.xticks(x, labels)
+    plt.title("Comparison of Letter Distributions")
+    plt.xlabel("Letters")
+    plt.ylabel("Probability")
+    plt.legend()
     plt.show()
 
 
@@ -224,11 +409,40 @@ def main():
         english_freq = calculate_letter_frequency(five_letter_words)
         english_positional_freq = calculate_positional_frequency(five_letter_words)
 
+        # Step 4-1: Get Top Letters
+        top_10_wordle = get_top_letters(wordle_freq)
+        top_10_five_letter = get_top_letters(english_freq)
+
+        # Add relative frequency (percentage) for better comparison
+        total_wordle = sum(wordle_freq.values())
+        total_five_letter = sum(english_freq.values())
+
+        top_10_wordle["Percentage"] = (
+            top_10_wordle["Frequency"] / total_wordle * 100
+        ).round(2)
+        top_10_five_letter["Percentage"] = (
+            top_10_five_letter["Frequency"] / total_five_letter * 100
+        ).round(2)
+
         # Step 5: Visualize Frequencies
         print("Visualizing data...")
         visualize_data(
             wordle_freq, wordle_positional_freq, english_freq, english_positional_freq
         )
+
+        # Step 6: Analyze Deviation
+        print("Analyzing deviation from uniform sampling...")
+        analyze_deviation(wordle_list, five_letter_words)
+
+        # Step 7: Visualize Comparison
+        print("Visualizing comparison...")
+        wordle_probs = calculate_probabilities(
+            calculate_letter_frequency(wordle_list), sum(wordle_freq.values())
+        )
+        english_probs = calculate_probabilities(
+            calculate_letter_frequency(five_letter_words), sum(english_freq.values())
+        )
+        plot_comparison(wordle_probs, english_probs)
 
         print("Process completed successfully!")
     except Exception as e:
